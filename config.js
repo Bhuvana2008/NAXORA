@@ -12,6 +12,6 @@
  * };
  */
 
-window.NAXORA_CONFIG = window.NAXORA_CONFIG || {
-    // API_BASE_URL: 'https://your-production-backend-url.com/api'
+window.NAXORA_CONFIG = {
+    API_BASE_URL: "https://naxora-9qrb.onrender.com/api"
 };
