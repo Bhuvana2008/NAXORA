@@ -1,0 +1,14 @@
+# ==========================================================================
+# NAXORA - Netlify Deployment Configuration
+# ==========================================================================
+
+[build]
+  # Publish directory is root where index.html, style.css, script.js are located
+  publish = "."
+  command = ""
+
+# Single Page App routing rule
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAXORA | AI Campus Resource Guardian</title>
+    
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js for Predictions & Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-layout">
+
+        <!-- ================= LEFT SIDEBAR ================= -->
+        <aside class="sidebar">
+            
+            <!-- Brand Logo -->
+            <div class="brand" onclick="switchView('dashboard')" role="button" tabindex="0" title="Go to Dashboard">
+                <div class="brand-icon-leaf">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+                        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+                    </svg>
+                </div>
+                <div class="brand-text-block">
+                    <h1>NAXORA</h1>
+                    <p id="brandSubtitle">AI Campus Resource Guardian</p>
+                </div>
+            </div>
+
+            <!-- Area / Facility Selector -->
+            <div class="sidebar-facility-picker">
+                <label for="facilitySelect">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span>MONITORED FACILITY:</span>
+                </label>
+                <select id="facilitySelect" class="facility-dropdown" onchange="handleFacilityChange(this.value)">
+                    <option value="campus" selected>ANITS Campus (Main)</option>
+                    <option value="hospital">ABC Healthcare Complex</option>
+                    <option value="apartments">Green Valley Residential</option>
+                    <option value="factory">XYZ Industrial Plant</option>
+                    <option value="smartcity">City Zone 04 Municipal</option>
+                </select>
+            </div>
+
+            <!-- Navigation Links (8 Dedicated Views) -->
+            <nav class="sidebar-nav">
+                <a href="javascript:void(0)" class="nav-item active" id="navDashboard" onclick="switchView('dashboard', this)">
+                    <span class="nav-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+                    </span>
+                    <span class="nav-label">Dashboard</span>
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="navLiveMap" onclick="switchView('live-map', this)">
+                    <span class="nav-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+                    </span>
+                    <span class="nav-label">Campus Map</span>
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="navAiInsights" onclick="switchView('ai-insights', this)">
+                    <span class="nav-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>
+                    </span>
+                    <span class="nav-label">AI Insights</span>
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="navPredictions" onclick="switchView('predictions', this)">
+                    <span class="nav-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                    </span>
+                    <span class="nav-label">Predictions</span>
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="navAlerts" onclick="switchView('alerts', this)">
+                    <span class="nav-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    </span>
+                    <span class="nav-label">Alerts</span>
+                    <span class="nav-badge" id="navBadgeAlert">2</span>
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="navReports" onclick="switchView('reports', this)">
+                    <span class="nav-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    </span>
+                    <span class="nav-label">Reports & ESG</span>
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="navAudit" onclick="switchView('audit', this)">
+                    <span class="nav-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    </span>
+                    <span class="nav-label">System Audit</span>
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="navSettings" onclick="switchView('settings', this)">
+                    <span class="nav-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    </span>
+                    <span class="nav-label">Settings</span>
+                </a>
+            </nav>
+
+            <!-- Quick Telemetry & Demo Box -->
+            <div class="simulation-sidebar-box">
+                <span class="sim-header-label">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    Live Demo Controls
+                </span>
+                <div class="sim-btn-grid">
+                    <button class="sim-mini-btn btn-sim-leak" onclick="triggerSimulatePowerSpike()" title="Simulate AC Power Surge in Block A Room 204">Simulate Spike</button>
+                    <button class="sim-mini-btn btn-sim-water" onclick="triggerSimulateWaterLeak()" title="Simulate Main Pipe Leak in Canteen">Simulate Leak</button>
+                    <button class="sim-mini-btn btn-sim-bms" onclick="triggerApplyBmsShutdown()" title="Apply Automated BMS Shutdown Protocol">BMS Shutdown</button>
+                    <button class="sim-mini-btn btn-sim-reset" onclick="triggerResetBaseline()" title="Reset All to Nominal Baseline">Reset Baseline</button>
+                    <button class="sim-mini-btn btn-sim-telemetry" onclick="openTelemetryModal()" title="Open Manual Telemetry Input Modal" style="grid-column: span 2;">+ Ingest Telemetry</button>
+                </div>
+            </div>
+
+            <!-- Sidebar Bottom: System Status Card -->
+            <div class="sidebar-status-box">
+                <span class="status-title">System Status</span>
+                <div class="status-indicator-line">
+                    <span class="dot-live-green" id="sysStatusDot"></span>
+                    <span class="status-active-txt" id="sysStatusText">Monitoring Active</span>
+                </div>
+                <div class="waveform-svg-wrap">
+                    <svg viewBox="0 0 140 28" class="green-waveform-svg">
+                        <path d="M0,14 L20,14 L26,5 L34,23 L40,9 L47,19 L54,14 L75,14 L81,6 L89,22 L96,8 L103,17 L110,14 L140,14" fill="none" stroke="#22c55e" stroke-width="2"/>
+                    </svg>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- ================= MAIN WRAPPER ================= -->
+        <div class="main-wrapper">
+
+            <!-- Top Header Bar -->
+            <header class="top-header">
+                <div class="header-left">
+                    <span class="header-pulse-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    </span>
+                    <h2 id="topHeading">Dashboard Overview</h2>
+                </div>
+                <div class="header-right">
+                    <div class="backend-status-badge" id="backendStatusBadge" title="Express Backend Server Status">
+                        <span class="backend-dot-indicator"></span>
+                        <span id="backendStatusTxt">Checking API...</span>
+                    </div>
+                    <div class="time-widget">
+                        <span class="time-clock-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </span>
+                        <span id="currentTime">10:24:38 AM</span>
+                    </div>
+                    <div class="live-pill-badge" id="livePillBadge" title="Real-Time Synchronization Status">
+                        <span class="live-signal-icon">●</span>
+                        <span id="liveStatusPillTxt">Monitoring Active</span>
+                    </div>
+                    <div class="last-updated-pill" id="lastUpdatedContainer" title="Last State Synchronization Time">
+                        <span>Last Updated: <strong id="lastUpdatedTime">--:--:--</strong></span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- ================= VIEW 1: DASHBOARD (MAIN OVERVIEW) ================= -->
+            <div class="view-container active-view" id="viewDashboard">
+
+                <!-- Top 4 Fully Clickable KPI Cards -->
+                <section class="kpi-cards-row">
+                    <!-- Electricity -->
+                    <div class="kpi-card kpi-waste clickable-kpi" id="cardTotalWaste" role="button" tabindex="0" onclick="openElectricityDetailsModal()" onkeydown="handleKpiKey(event, 'electricity')" title="Click to view Electricity Consumption Details & Analytics">
+                        <div class="kpi-icon-circle green-circle">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Electricity Consumption</span>
+                            <h3 class="kpi-val" id="kpiTotalWaste">1248 kWh</h3>
+                            <span class="kpi-sub-trend green-text" id="kpiWasteTrend">&darr; 8.6% vs yesterday</span>
+                        </div>
+                        <span class="kpi-click-hint">Click for details &rarr;</span>
+                    </div>
+
+                    <!-- Water -->
+                    <div class="kpi-card kpi-water clickable-kpi" id="cardWaterUsage" role="button" tabindex="0" onclick="openWaterDetailsModal()" onkeydown="handleKpiKey(event, 'water')" title="Click to view Water Consumption Details & Analytics">
+                        <div class="kpi-icon-circle cyan-circle">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Water Consumption</span>
+                            <h3 class="kpi-val" id="kpiWaterUsage">8420 L</h3>
+                            <span class="kpi-sub-trend cyan-text" id="kpiWaterTrend">&darr; 4.2% vs baseline</span>
+                        </div>
+                        <span class="kpi-click-hint">Click for details &rarr;</span>
+                    </div>
+
+                    <!-- Active Alerts -->
+                    <div class="kpi-card kpi-high clickable-kpi" id="cardHighWaste" role="button" tabindex="0" onclick="switchView('alerts')" onkeydown="handleKpiKey(event, 'alerts')" title="Click to open Alerts Center">
+                        <div class="kpi-icon-circle red-circle">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Active Alerts</span>
+                            <h3 class="kpi-val" id="kpiHighWaste">2</h3>
+                            <span class="kpi-sub-trend red-text" id="kpiHighSub">Needs Immediate Action</span>
+                        </div>
+                        <span class="kpi-click-hint">Open Alerts Center &rarr;</span>
+                    </div>
+
+                    <!-- Potential Savings -->
+                    <div class="kpi-card kpi-saved clickable-kpi" id="cardSaved" role="button" tabindex="0" onclick="openSavingsDetailsModal()" onkeydown="handleKpiKey(event, 'savings')" title="Click to view Savings & Environmental Impact Details">
+                        <div class="kpi-icon-circle green-circle">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Potential Savings</span>
+                            <h3 class="kpi-val" id="kpiResourcesSaved">Rs. 3,840</h3>
+                            <span class="kpi-sub-trend green-text" id="kpiSavedSub">This Month (Recoverable)</span>
+                        </div>
+                        <span class="kpi-click-hint">Click for details &rarr;</span>
+                    </div>
+                </section>
+
+                <!-- Dashboard Grid: Map + Right AI Stack -->
+                <div class="dashboard-grid-layout">
+
+                    <!-- Center Column -->
+                    <div class="center-content-col">
+
+                        <!-- 3D Realistic Campus Resource Map -->
+                        <div class="map-card-container">
+                            <div class="map-card-header">
+                                <div class="map-title-group">
+                                    <h3 id="mapHeadingText">LIVE CAMPUS RESOURCE MAP</h3>
+                                    <div class="map-live-tag">
+                                        <span class="live-glow-dot"></span>
+                                        <span>REAL TIME MONITORING</span>
+                                    </div>
+                                </div>
+                                <div class="map-legend-group">
+                                    <span class="legend-item"><span class="dot-red"></span> Critical / High</span>
+                                    <span class="legend-item"><span class="dot-orange"></span> Medium</span>
+                                    <span class="legend-item"><span class="dot-green"></span> Normal</span>
+                                </div>
+                            </div>
+
+                            <div class="isometric-map-stage" id="mapStage">
+                                <img src="campus-map.png" alt="3D Realistic Campus Resource Map" class="campus-isometric-bg" id="mapBackgroundImg">
+                                <div class="laser-scanner-beam" id="scannerBeam"></div>
+                                <div id="mapPinsDashboardLayer">
+                                    <!-- Dynamic Hotspot Pins rendered here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Architecture Pipeline Banner -->
+                        <div class="pipeline-card-container">
+                            <div class="pipeline-header">
+                                <span class="pipeline-icon">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                </span>
+                                <h4>AI WASTE DETECTION ENGINE &bull; SYSTEM ARCHITECTURE</h4>
+                            </div>
+                            <div class="pipeline-steps-flow">
+                                <div class="pipe-node active"><span class="pipe-num">1</span> RESOURCE DATA</div>
+                                <span class="pipe-arrow">&rarr;</span>
+                                <div class="pipe-node active"><span class="pipe-num">2</span> PATTERN ANALYSIS</div>
+                                <span class="pipe-arrow">&rarr;</span>
+                                <div class="pipe-node active"><span class="pipe-num">3</span> ANOMALY DETECTION</div>
+                                <span class="pipe-arrow">&rarr;</span>
+                                <div class="pipe-node active"><span class="pipe-num">4</span> AI PREDICTION</div>
+                                <span class="pipe-arrow">&rarr;</span>
+                                <div class="pipe-node active"><span class="pipe-num">5</span> WASTE ALERT</div>
+                                <span class="pipe-arrow">&rarr;</span>
+                                <div class="pipe-node active"><span class="pipe-num">6</span> RECOMMENDED ACTION</div>
+                            </div>
+                        </div>
+
+                        <!-- Hotspots Table -->
+                        <div class="hotspots-card-container">
+                            <div class="hotspots-header">
+                                <div class="hotspots-title-left">
+                                    <span class="hotspots-icon">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                                    </span>
+                                    <h4>RESOURCE WASTE HOTSPOTS TABLE</h4>
+                                </div>
+                                <span class="hotspot-subhint">Click any row to inspect AI diagnostic</span>
+                            </div>
+                            <div class="hotspots-table-head">
+                                <span class="col-th th-loc">LOCATION</span>
+                                <span class="col-th th-res">RESOURCE</span>
+                                <span class="col-th th-stat">STATUS</span>
+                                <span class="col-th th-lvl">WASTE LEVEL</span>
+                                <span class="col-th th-act">AI RECOMMENDED ACTION</span>
+                            </div>
+                            <div class="hotspot-rows-list" id="hotspotRowsList">
+                                <!-- Populated dynamically from API -->
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Right Column: Intelligence Stack -->
+                    <aside class="right-intelligence-panel">
+                        <!-- Card 1: AI Insight -->
+                        <div class="ai-card card-ai-insight" onclick="switchView('ai-insights')" style="cursor: pointer;" title="Click to open AI Insights & Root Cause Analysis">
+                            <div class="ai-card-top">
+                                <span class="ai-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>
+                                </span>
+                                <h4>AI INSIGHT</h4>
+                            </div>
+                            <p class="ai-text-body" id="aiInsightBody">
+                                Block A &ndash; Room 204 is consuming 2.4x more electricity than the campus average.
+                            </p>
+                            <div class="ai-diag-details">
+                                <p><strong>Detection Reason:</strong> <span id="aiDetectionReason">Abnormal electricity consumption during non-working hours.</span></p>
+                                <p><strong>AI Confidence:</strong> <span class="green-text" id="aiConfidenceVal">96%</span></p>
+                            </div>
+                            <div class="ai-action-box">
+                                <strong>Recommended Action:</strong>
+                                <p id="aiSuggestedAction">Inspect high-consumption equipment and apply automated BMS control.</p>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Future Prediction -->
+                        <div class="ai-card card-prediction" onclick="switchView('predictions')" style="cursor: pointer;" title="Click to view 7-Day ARIMA Predictions">
+                            <div class="ai-card-top">
+                                <span class="ai-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                                </span>
+                                <h4>FUTURE PREDICTION</h4>
+                            </div>
+                            <p class="ai-text-body" id="futurePredictionBody">
+                                Room 204 may waste approximately: <strong>252 kWh/month</strong>.
+                            </p>
+                            <div class="pred-cost-box">
+                                <span>Estimated Avoidable Cost:</span>
+                                <strong class="pred-cost-val" id="futurePredictionCost">Rs. 2,016/month</strong>
+                            </div>
+                            <div class="pred-meta-line">
+                                <span>AI Confidence: <strong class="green-text" id="predConfidenceVal">91%</strong></span>
+                                <span class="pred-link-btn">View Chart &rarr;</span>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Priority Alert -->
+                        <div class="ai-card card-alert" id="cardPriorityAlert">
+                            <div class="ai-card-top">
+                                <span class="ai-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                                </span>
+                                <h4 id="priorityAlertHeader">PRIORITY ALERT</h4>
+                            </div>
+                            <p class="alert-location-badge" id="priorityAlertLocation">Block A &ndash; Room 204</p>
+                            <p class="ai-text-body" id="priorityAlertBody">
+                                Severe abnormal electricity consumption detected (+139% above baseline). Immediate inspection recommended.
+                            </p>
+                            <strong class="alert-immediate-tag" id="priorityAlertAction">
+                                Immediate inspection recommended!
+                            </strong>
+                            <div class="alert-mitigation-btn-wrap" id="alertMitigationWrap">
+                                <button class="btn-quick-fix" onclick="triggerApplyBmsShutdown()" title="Execute Automated BMS Isolation Protocol">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                                    Apply Automated BMS Shutdown
+                                </button>
+                                <button class="btn-sec-action" onclick="switchView('alerts')" style="width: 100%; justify-content: center; margin-top: 6px;">
+                                    Open Alert Center &rarr;
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Card 4: Live Demo Tour -->
+                        <button class="live-demo-action-btn" id="btnLiveDemo" onclick="triggerFullSimulationWorkflow()">
+                            <div class="play-icon-circle">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            </div>
+                            <div class="demo-btn-text">
+                                <strong>LIVE DEMO TOUR</strong>
+                                <span id="demoBtnSub">See NAXORA in Action (30s Guided Tour)</span>
+                            </div>
+                        </button>
+                    </aside>
+
+                </div>
+
+            </div>
+
+            <!-- ================= VIEW 2: CAMPUS MAP (IMMERSIVE MAP MODE) ================= -->
+            <div class="view-container" id="viewLiveMap" style="display: none;">
+                <div class="section-card">
+                    <div class="sec-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3>Spatial Campus Resource Map & Zone Telemetry</h3>
+                            <p>Interactive 3D building visualizer with real-time sub-meter sensor nodes and radar indicators.</p>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-sec-action" onclick="openTelemetryModal()">+ Ingest Telemetry</button>
+                            <button class="btn-sec-action" onclick="triggerSimulatePowerSpike()">Simulate Spike</button>
+                            <button class="btn-sec-action" onclick="triggerSimulateWaterLeak()">Simulate Leak</button>
+                            <button class="btn-sec-action" onclick="triggerResetBaseline()">Reset Baseline</button>
+                        </div>
+                    </div>
+                    
+                    <div class="map-immersive-container">
+                        <div class="map-stage-wrapper" style="height: 520px; position: relative; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-card);">
+                            <img src="campus-map.png" alt="Campus Map" class="campus-isometric-bg">
+                            <div class="laser-scanner-beam"></div>
+                            <div id="mapPinsLiveLayer">
+                                <!-- Dynamic Hotspot Pins rendered here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 3: AI INSIGHTS & ROOT CAUSE ANALYSIS ================= -->
+            <div class="view-container" id="viewAiInsights" style="display: none;">
+                
+                <!-- AI Engine Status Header Banner -->
+                <div class="ai-status-hero-banner">
+                    <div class="ai-status-badge-wrap">
+                        <div class="ai-pulse-dot"></div>
+                        <span class="ai-online-title">AI ENGINE &bull; ONLINE</span>
+                    </div>
+                    <div class="ai-meta-metrics-row">
+                        <div class="ai-meta-item">
+                            <span class="ai-meta-lbl">LAST ANALYSIS:</span>
+                            <strong class="ai-meta-val" id="aiLastAnalysisTime">Just now</strong>
+                        </div>
+                        <div class="ai-meta-item">
+                            <span class="ai-meta-lbl">ROOMS ANALYZED:</span>
+                            <strong class="ai-meta-val" id="aiRoomsAnalyzedCount">14 Rooms / 7 Zones</strong>
+                        </div>
+                        <div class="ai-meta-item">
+                            <span class="ai-meta-lbl">ANOMALIES DETECTED:</span>
+                            <strong class="ai-meta-val red-text" id="aiAnomaliesCount">2 Active</strong>
+                        </div>
+                        <div class="ai-meta-item">
+                            <span class="ai-meta-lbl">AVERAGE CONFIDENCE:</span>
+                            <strong class="ai-meta-val green-text" id="aiAvgConfidence">94.2%</strong>
+                        </div>
+                    </div>
+                    <button class="btn-refresh-ai" onclick="refreshAiAnalysis()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        Refresh AI Analysis
+                    </button>
+                </div>
+
+                <div class="section-card">
+                    <div class="sec-card-header">
+                        <div class="header-with-badge">
+                            <h3>Real-Time AI Anomaly Detections</h3>
+                            <span class="badge-mini-proto">Live Inference Engine</span>
+                        </div>
+                        <p>Continuous sub-meter telemetry correlation against calibrated baseline thresholds and occupancy telemetry.</p>
+                    </div>
+
+                    <!-- Dynamic Anomaly Detection Cards List -->
+                    <div class="ai-detections-list" id="aiDetectionsList">
+                        <!-- Populated dynamically from script.js -->
+                    </div>
+                </div>
+
+                <!-- AI Future Prediction & Priority Box Row -->
+                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px;">
+                    <div class="section-card">
+                        <div class="sec-card-header">
+                            <div class="header-with-badge">
+                                <h3>Future Resource Waste Impact</h3>
+                                <span class="badge-mini-proto">Predictive Forecaster</span>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
+                            <div class="report-box">
+                                <span class="stat-lbl">Projected Monthly Waste</span>
+                                <div class="score-large red-text" id="aiPredMonthlyWaste">252 kWh</div>
+                                <p>If left unmitigated</p>
+                            </div>
+                            <div class="report-box">
+                                <span class="stat-lbl">Estimated Cost Impact</span>
+                                <div class="score-large orange-text" id="aiPredMonthlyCost">Rs. 2,016</div>
+                                <p>Recoverable through BMS</p>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px;">
+                            <span style="font-size: 0.75rem; color: var(--text-secondary);">Forecast Confidence: <strong class="green-text">91%</strong> &bull; Risk Level: <strong class="red-text">CRITICAL</strong></span>
+                            <button class="btn-sec-action" onclick="switchView('predictions')">View Predictions &rarr;</button>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <div class="sec-card-header">
+                            <div class="header-with-badge">
+                                <h3>Priority Action Required</h3>
+                                <span class="tbl-status-pill critical" id="aiPriorityActionBadge">CRITICAL</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 0.8rem; color: #fff; margin-top: 8px;" id="aiPriorityActionText">
+                            <strong>Block A - Room 204</strong> has abnormal sustained electrical draw (+139.7%). Immediate automated BMS isolation recommended to prevent energy loss.
+                        </p>
+                        <div style="display: flex; gap: 8px; margin-top: 14px;">
+                            <button class="btn-modal-bms" onclick="triggerApplyBmsShutdown()" style="flex: 1;">Apply BMS Shutdown</button>
+                            <button class="btn-sec-action" onclick="switchView('alerts')" style="flex: 1;">Open Alert Center</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ================= VIEW 4: PREDICTIONS ================= -->
+            <div class="view-container" id="viewPredictions" style="display: none;">
+                <div class="section-card">
+                    <div class="sec-card-header">
+                        <div class="header-with-badge">
+                            <h3>Predictive Waste Intelligence & 7-Day Rolling Horizon Forecast</h3>
+                        </div>
+                        <p>7-Day Rolling Horizon forecasting comparing calibrated baseline against projected unmitigated wastage trajectory.</p>
+                    </div>
+                    <div class="chart-canvas-box" style="position: relative; height: 320px; width: 100%;">
+                        <canvas id="predictionChartCanvas"></canvas>
+                    </div>
+
+                    <div class="pred-breakdown-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 18px;">
+                        <div class="report-box">
+                            <span class="stat-lbl">Projected 30-Day Wastage</span>
+                            <div class="score-large red-text" id="predMonthlyWaste">252 kWh</div>
+                            <p>If left unmitigated</p>
+                        </div>
+                        <div class="report-box">
+                            <span class="stat-lbl">Estimated Avoidable Cost</span>
+                            <div class="score-large orange-text" id="predMonthlyCost">Rs. 2,016</div>
+                            <p>Recoverable through BMS</p>
+                        </div>
+                        <div class="report-box">
+                            <span class="stat-lbl">Forecast Model Confidence</span>
+                            <div class="score-large green-text" id="predModelConfidence">96%</div>
+                            <p>Based on 30-day baseline</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 5: ALERTS CENTER ================= -->
+            <div class="view-container" id="viewAlerts" style="display: none;">
+                <div class="section-card">
+                    <div class="sec-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <h3>Alerts Center</h3>
+                                <span class="alerts-counter-pill" id="alertsActiveCountBadge">ACTIVE ALERTS: 2</span>
+                            </div>
+                            <p>Real-time prioritized anomaly notifications & automated mitigation dispatcher.</p>
+                        </div>
+                        <div class="alert-filter-pills" id="alertFilterPills">
+                            <button class="filter-pill active" onclick="filterAlerts('ALL', this)">ALL</button>
+                            <button class="filter-pill" onclick="filterAlerts('CRITICAL', this)">CRITICAL</button>
+                            <button class="filter-pill" onclick="filterAlerts('HIGH', this)">HIGH</button>
+                            <button class="filter-pill" onclick="filterAlerts('MEDIUM', this)">MEDIUM</button>
+                            <button class="filter-pill" onclick="filterAlerts('RESOLVED', this)">RESOLVED</button>
+                        </div>
+                    </div>
+
+                    <div class="alerts-feed-list" id="alertsFeedList" style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px;">
+                        <!-- Dynamic Alert Cards rendered by script.js -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 6: REPORTS & ESG ================= -->
+            <div class="view-container" id="viewReports" style="display: none;">
+                <div class="section-card">
+                    <div class="sec-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3>Resource Efficiency Score & Environmental Impact</h3>
+                            <p>Campus sustainability performance metrics and avoided carbon footprint.</p>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-sec-action" onclick="exportReportData('csv')">Export CSV</button>
+                            <button class="btn-sec-action" onclick="exportReportData('json')">Export JSON</button>
+                        </div>
+                    </div>
+
+                    <div class="reports-grid">
+                        <div class="report-box">
+                            <h4>Resource Efficiency Score</h4>
+                            <div class="score-large green-text" id="reportScore">82 / 100</div>
+                            <p id="reportScoreStatus">Optimizing (Grade A-)</p>
+                        </div>
+                        <div class="report-box">
+                            <h4>Carbon Prevented</h4>
+                            <div class="score-large green-text" id="reportCarbon">3.42 Tons</div>
+                            <p>CO2e emissions avoided</p>
+                        </div>
+                        <div class="report-box">
+                            <h4>Water Conserved</h4>
+                            <div class="score-large cyan-text" id="reportWater">42,500 L</div>
+                            <p>Recovered leak volume</p>
+                        </div>
+                        <div class="report-box">
+                            <h4>Potential Savings</h4>
+                            <div class="score-large green-text" id="reportSavings">Rs. 3,840</div>
+                            <p>Recoverable this month</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 7: SYSTEM AUDIT TRAIL ================= -->
+            <div class="view-container" id="viewAudit" style="display: none;">
+                <div class="section-card">
+                    <div class="sec-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3>System Audit Trail & Event Ledger</h3>
+                            <p>Immutable timestamped records of AI anomaly detections, BMS actions, operator simulations, and alert resolutions.</p>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <button class="btn-sec-action" id="btnRefreshAudit" onclick="loadAuditTrail(true)">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                                Refresh Audit Trail
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Audit Category Filter Pills -->
+                    <div class="audit-filter-bar" style="display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap;">
+                        <button class="filter-pill active" onclick="filterAuditCategory('ALL', this)">ALL</button>
+                        <button class="filter-pill" onclick="filterAuditCategory('AI', this)">AI</button>
+                        <button class="filter-pill" onclick="filterAuditCategory('BMS', this)">BMS</button>
+                        <button class="filter-pill" onclick="filterAuditCategory('ALERTS', this)">ALERTS</button>
+                        <button class="filter-pill" onclick="filterAuditCategory('USER ACTIONS', this)">USER ACTIONS</button>
+                        <button class="filter-pill" onclick="filterAuditCategory('SYSTEM', this)">SYSTEM</button>
+                    </div>
+
+                    <!-- Audit Table -->
+                    <div class="audit-table-box" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-card); border-radius: 8px; margin-top: 12px; overflow-x: auto;">
+                        <table class="styled-audit-table" style="width: 100%; border-collapse: collapse; font-size: 0.78rem;">
+                            <thead>
+                                <tr style="background: rgba(0,0,0,0.4); text-align: left; color: var(--text-muted);">
+                                    <th style="padding: 10px 14px;">TIME</th>
+                                    <th style="padding: 10px 14px;">USER / SYSTEM</th>
+                                    <th style="padding: 10px 14px;">ACTION</th>
+                                    <th style="padding: 10px 14px;">LOCATION</th>
+                                    <th style="padding: 10px 14px;">DETAILS</th>
+                                    <th style="padding: 10px 14px;">STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fullAuditTableBody">
+                                <!-- Populated dynamically by script.js -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 8: SETTINGS ================= -->
+            <div class="view-container" id="viewSettings" style="display: none;">
+                <div class="section-card">
+                    <div class="sec-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3>System Settings & AI Configuration</h3>
+                            <p>Configure monitoring parameters, anomaly sensitivity, alert preferences, and API connections.</p>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-sec-action" onclick="saveSettingsToBackend()">Save Settings</button>
+                            <button class="btn-sec-action" onclick="resetSettingsDefaults()">Reset Defaults</button>
+                        </div>
+                    </div>
+
+                    <div class="settings-grid-layout" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px;">
+                        
+                        <!-- Section A: Monitoring Settings -->
+                        <div class="settings-group-card">
+                            <h4>A. Monitoring Settings</h4>
+                            <div class="form-row">
+                                <label>Monitoring Zone:</label>
+                                <input type="text" id="setMonitoringZone" class="input-setting" value="ANITS Campus (Main)">
+                            </div>
+                            <div class="form-row">
+                                <label>Auto Refresh:</label>
+                                <select id="setAutoRefresh" class="input-setting">
+                                    <option value="true" selected>Enabled</option>
+                                    <option value="false">Disabled</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label>Refresh Interval (Seconds):</label>
+                                <select id="setRefreshInterval" class="input-setting">
+                                    <option value="3">3 Seconds (Fast)</option>
+                                    <option value="5" selected>5 Seconds (Nominal)</option>
+                                    <option value="15">15 Seconds</option>
+                                    <option value="30">30 Seconds</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Section B: AI Detection Settings -->
+                        <div class="settings-group-card">
+                            <h4>B. AI Anomaly Engine Settings</h4>
+                            <div class="form-row">
+                                <label>Electricity Threshold (% Above Baseline):</label>
+                                <input type="number" id="setElecThreshold" class="input-setting" value="50" min="10" max="200">
+                            </div>
+                            <div class="form-row">
+                                <label>Water Leak Threshold (% Above Baseline):</label>
+                                <input type="number" id="setWaterThreshold" class="input-setting" value="30" min="10" max="200">
+                            </div>
+                            <div class="form-row">
+                                <label>Minimum AI Confidence (%):</label>
+                                <input type="number" id="setAiConfidenceMin" class="input-setting" value="80" min="50" max="99">
+                            </div>
+                            <div class="form-row">
+                                <label>Detection Sensitivity:</label>
+                                <select id="setAiSensitivity" class="input-setting">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium" selected>Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Section C: Alert Settings -->
+                        <div class="settings-group-card">
+                            <h4>C. Alert & Notification Settings</h4>
+                            <div class="form-row">
+                                <label>Sound Alerts:</label>
+                                <select id="setSoundAlerts" class="input-setting">
+                                    <option value="true" selected>Enabled (Web Audio)</option>
+                                    <option value="false">Muted</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label>Browser Toast Notifications:</label>
+                                <select id="setBrowserNotifications" class="input-setting">
+                                    <option value="true" selected>Enabled</option>
+                                    <option value="false">Disabled</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Section D: Telemetry & Simulation Controls -->
+                        <div class="settings-group-card">
+                            <h4>D. Telemetry & Simulation Controls</h4>
+                            <div class="form-row">
+                                <label>Telemetry Stream Mode:</label>
+                                <select id="setSimulationMode" class="input-setting">
+                                    <option value="true" selected>Automated Telemetry Stream</option>
+                                    <option value="false">Live IoT Sensor Mode</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label>API Server Endpoint:</label>
+                                <input type="text" id="setApiUrl" class="input-setting" value="http://localhost:5000/api">
+                            </div>
+                            <div style="display: flex; gap: 8px; margin-top: 10px;">
+                                <button class="btn-sec-action" onclick="checkBackendHealth(); showNotification('Testing backend connection...');" style="flex: 1;">Test Connection</button>
+                                <button class="btn-sec-action" onclick="triggerResetBaseline()" style="flex: 1;">Reset Demo Data</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="app-footer">
+                <span class="footer-highlight">NAXORA</span> &bull; AI Campus Resource Guardian &bull; Sustainable Smart Campus &bull; Automated Resource Intelligence System.
+            </footer>
+
+        </div>
+
+    </div>
+
+    <!-- ================= MODAL 1: FLOATING HOTSPOT DIAGNOSTIC MODAL ================= -->
+    <div class="hotspot-modal-backdrop" id="hotspotModalBackdrop" onclick="closeHotspotModal(event)">
+        <div class="hotspot-modal-content" onclick="event.stopPropagation()">
+            <div class="modal-top-bar">
+                <div class="modal-title-wrap">
+                    <span class="tbl-dot" id="modalSeverityDot"></span>
+                    <h3 id="modalBuildingTitle">BLOCK A - ROOM 204</h3>
+                    <span class="modal-status-badge" id="modalStatusBadge">CRITICAL</span>
+                </div>
+                <button class="modal-close-x" onclick="closeHotspotModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body-grid">
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Current Consumption</span>
+                    <strong class="stat-num" id="modalCurrentVal">1486 kWh</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Calibrated Baseline</span>
+                    <strong class="stat-num" id="modalBaselineVal">620 kWh</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Deviation Percentage</span>
+                    <strong class="stat-num red-text" id="modalDeviationVal">+139%</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">AI Confidence</span>
+                    <strong class="stat-num green-text" id="modalConfidenceVal">96%</strong>
+                </div>
+            </div>
+
+            <div class="modal-action-box">
+                <strong>Detection Reason & Root Cause:</strong>
+                <p id="modalReasonText" style="font-size: 0.74rem; color: var(--text-secondary); margin-bottom: 6px;">Consumption remains significantly above baseline while occupancy is zero.</p>
+                <strong>Recommended Action:</strong>
+                <p id="modalActionText">Inspect equipment and apply automated BMS shutdown.</p>
+            </div>
+
+            <div class="modal-footer-btns">
+                <button class="btn-modal-bms" onclick="triggerApplyBmsShutdown(); closeHotspotModal();">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    Apply Automated BMS Shutdown
+                </button>
+                <button class="btn-modal-close" onclick="closeHotspotModal()">Dismiss</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 2: ELECTRICITY DETAILS MODAL ================= -->
+    <div class="hotspot-modal-backdrop" id="elecDetailsModalBackdrop" onclick="closeElectricityDetailsModal(event)">
+        <div class="hotspot-modal-content" onclick="event.stopPropagation()" style="max-width: 620px;">
+            <div class="modal-top-bar">
+                <div class="modal-title-wrap">
+                    <span class="tbl-dot dot-orange"></span>
+                    <h3>Electricity Consumption Details</h3>
+                </div>
+                <button class="modal-close-x" onclick="closeElectricityDetailsModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Current Usage</span>
+                    <strong class="stat-num" id="elecModalCurrent">1846 kWh</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Daily Baseline</span>
+                    <strong class="stat-num" id="elecModalBaseline">1700 kWh</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Difference vs Baseline</span>
+                    <strong class="stat-num red-text" id="elecModalDiff">+8.6%</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Peak Usage Time</span>
+                    <strong class="stat-num" style="font-size: 0.95rem;">14:00 - 16:00</strong>
+                </div>
+                <div class="modal-stat-card" style="grid-column: span 2;">
+                    <span class="stat-lbl">Top Consuming Location</span>
+                    <strong class="stat-num red-text" id="elecModalTopLocation" style="font-size: 0.95rem;">Block A - Room 204 (4.8 kW)</strong>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-card); border-radius: 8px; padding: 12px; height: 180px; position: relative;">
+                <canvas id="elecUsageChartCanvas"></canvas>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Estimated Monthly Cost</span>
+                    <strong class="stat-num orange-text" id="elecModalCost">Rs. 14,768</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Potential Monthly Savings</span>
+                    <strong class="stat-num green-text" id="elecModalSavings">Rs. 2,016</strong>
+                </div>
+            </div>
+
+            <div class="modal-footer-btns">
+                <button class="btn-sec-action" onclick="closeElectricityDetailsModal(); switchView('ai-insights');">View AI Insight &rarr;</button>
+                <button class="btn-sec-action" onclick="closeElectricityDetailsModal(); switchView('live-map');">View Hotspots &rarr;</button>
+                <button class="btn-modal-close" onclick="closeElectricityDetailsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 3: WATER DETAILS MODAL ================= -->
+    <div class="hotspot-modal-backdrop" id="waterDetailsModalBackdrop" onclick="closeWaterDetailsModal(event)">
+        <div class="hotspot-modal-content" onclick="event.stopPropagation()" style="max-width: 620px;">
+            <div class="modal-top-bar">
+                <div class="modal-title-wrap">
+                    <span class="tbl-dot dot-cyan"></span>
+                    <h3>Water Consumption Details</h3>
+                </div>
+                <button class="modal-close-x" onclick="closeWaterDetailsModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Water Consumption</span>
+                    <strong class="stat-num cyan-text" id="waterModalCurrent">8420 L</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Baseline Volume</span>
+                    <strong class="stat-num" id="waterModalBaseline">8790 L</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Variance vs Baseline</span>
+                    <strong class="stat-num green-text" id="waterModalDiff">-4.2%</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Peak Flow Window</span>
+                    <strong class="stat-num" style="font-size: 0.95rem;">11:30 - 13:30</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Highest Usage Node</span>
+                    <strong class="stat-num" style="font-size: 0.95rem;">Main Canteen</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Leak Diagnostic</span>
+                    <strong class="stat-num green-text" id="waterModalStatus">NORMAL</strong>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-card); border-radius: 8px; padding: 12px; height: 180px; position: relative;">
+                <canvas id="waterUsageChartCanvas"></canvas>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Estimated Monthly Usage</span>
+                    <strong class="stat-num cyan-text" id="waterModalMonthly">252,600 L</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Potential Water Savings</span>
+                    <strong class="stat-num green-text" id="waterModalSavings">42,500 L (Rs. 1,824)</strong>
+                </div>
+            </div>
+
+            <div class="modal-footer-btns">
+                <button class="btn-sec-action" onclick="closeWaterDetailsModal(); switchView('live-map');">View Water Hotspots</button>
+                <button class="btn-modal-bms" onclick="closeWaterDetailsModal(); triggerSimulateWaterLeak();" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border-color: #38bdf8;">Simulate Water Leak</button>
+                <button class="btn-modal-close" onclick="closeWaterDetailsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 4: SAVINGS DETAILS MODAL ================= -->
+    <div class="hotspot-modal-backdrop" id="savingsDetailsModalBackdrop" onclick="closeSavingsDetailsModal(event)">
+        <div class="hotspot-modal-content" onclick="event.stopPropagation()" style="max-width: 620px;">
+            <div class="modal-top-bar">
+                <div class="modal-title-wrap">
+                    <span class="tbl-dot dot-green"></span>
+                    <h3>Potential Savings & Environmental Impact</h3>
+                </div>
+                <button class="modal-close-x" onclick="closeSavingsDetailsModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Total Monthly Savings</span>
+                    <strong class="stat-num green-text" id="savingsModalTotal">Rs. 3,840</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Electricity Savings</span>
+                    <strong class="stat-num" id="savingsModalElec">Rs. 2,016 / mo</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Water Savings</span>
+                    <strong class="stat-num" id="savingsModalWater">Rs. 1,824 / mo</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Annualized ROI</span>
+                    <strong class="stat-num green-text" id="savingsModalAnnual">Rs. 46,080</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Energy Conserved</span>
+                    <strong class="stat-num" id="savingsModalEnergy">252 kWh / mo</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Water Conserved</span>
+                    <strong class="stat-num cyan-text" id="savingsModalWaterVol">42,500 L / mo</strong>
+                </div>
+            </div>
+
+            <!-- Savings Chart -->
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-card); border-radius: 8px; padding: 12px; height: 180px; position: relative;">
+                <canvas id="savingsBreakdownChartCanvas"></canvas>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">CO2e Emissions Avoided</span>
+                    <strong class="stat-num green-text" id="savingsModalCo2">3.42 Tons</strong>
+                </div>
+                <div class="modal-stat-card">
+                    <span class="stat-lbl">Resource Efficiency Score</span>
+                    <strong class="stat-num green-text" id="savingsModalScore">82 / 100 (Grade A-)</strong>
+                </div>
+            </div>
+
+            <div class="modal-footer-btns">
+                <button class="btn-sec-action" onclick="closeSavingsDetailsModal(); switchView('reports');">View Reports &rarr;</button>
+                <button class="btn-sec-action" onclick="closeSavingsDetailsModal(); switchView('predictions');">View Predictions &rarr;</button>
+                <button class="btn-modal-close" onclick="closeSavingsDetailsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 5: MANUAL TELEMETRY INPUT MODAL ================= -->
+    <div class="hotspot-modal-backdrop" id="telemetryModalBackdrop" onclick="closeTelemetryModal(event)">
+        <div class="hotspot-modal-content" onclick="event.stopPropagation()" style="max-width: 520px;">
+            <div class="modal-top-bar">
+                <div class="modal-title-wrap">
+                    <span class="tbl-dot dot-green"></span>
+                    <h3>Manual IoT Telemetry Ingestion</h3>
+                </div>
+                <button class="modal-close-x" onclick="closeTelemetryModal()">&times;</button>
+            </div>
+            
+            <form id="telemetryForm" onsubmit="handleTelemetrySubmit(event)" style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-row">
+                        <label>Facility:</label>
+                        <select id="telFacility" class="input-setting">
+                            <option value="campus" selected>ANITS Campus</option>
+                            <option value="hospital">ABC Hospital</option>
+                            <option value="apartments">Green Valley Apts</option>
+                            <option value="factory">XYZ Factory</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label>Building / Campus Zone:</label>
+                        <input type="text" id="telBuilding" class="input-setting" value="Block A" list="telBuildingOptions" placeholder="e.g. Block A, Lab 2, Main Canteen" required>
+                        <datalist id="telBuildingOptions">
+                            <option value="Block A">
+                            <option value="Block B">
+                            <option value="Admin Block">
+                            <option value="Lab 1">
+                            <option value="Lab 2">
+                            <option value="Main Canteen">
+                            <option value="Hostel Block">
+                            <option value="Library">
+                        </datalist>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-row">
+                        <label>Room / Sub-Zone (Optional):</label>
+                        <input type="text" id="telRoom" class="input-setting" value="Room 204" placeholder="e.g. Room 204, Room 105, Wash Station">
+                    </div>
+                    <div class="form-row">
+                        <label>Resource Type:</label>
+                        <select id="telResourceType" class="input-setting" onchange="updateTelemetryUnit()">
+                            <option value="Electricity" selected>Electricity (kWh)</option>
+                            <option value="Water">Water (L)</option>
+                            <option value="HVAC">HVAC (CFM)</option>
+                            <option value="Gas">Gas (m3)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1.4fr 0.6fr 1fr; gap: 10px;">
+                    <div class="form-row">
+                        <label>Current Consumption:</label>
+                        <input type="number" id="telConsumption" class="input-setting" value="1850" step="any" required>
+                    </div>
+                    <div class="form-row">
+                        <label>Unit:</label>
+                        <input type="text" id="telUnit" class="input-setting" value="kWh" readonly>
+                    </div>
+                    <div class="form-row">
+                        <label>Occupancy Count:</label>
+                        <input type="number" id="telOccupancy" class="input-setting" value="0" min="0">
+                    </div>
+                </div>
+
+                <div class="modal-footer-btns" style="margin-top: 8px;">
+                    <button type="submit" class="btn-modal-bms" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-color: #60a5fa;">
+                        Ingest Telemetry & Run Anomaly Engine
+                    </button>
+                    <button type="button" class="btn-modal-close" onclick="closeTelemetryModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Configuration & Application Scripts -->
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

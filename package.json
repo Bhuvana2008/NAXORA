@@ -1,0 +1,15 @@
+﻿{
+  "name": "naxora-ai-campus-resource-guardian",
+  "version": "1.0.0",
+  "description": "AI Campus Resource Guardian - Smart Resource Leak Detection Prototype",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node server/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5"
+  }
+}
