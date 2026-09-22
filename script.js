@@ -24,7 +24,15 @@ const ML_API_BASE = (() => {
     if (typeof window !== 'undefined' && window.NAXORA_CONFIG && window.NAXORA_CONFIG.ML_API_BASE_URL) {
         return window.NAXORA_CONFIG.ML_API_BASE_URL.replace(/\/+$/, '');
     }
-    return 'http://localhost:5001';
+    if (typeof window !== 'undefined' && window.location) {
+        if (window.location.protocol === 'file:') {
+            return 'http://localhost:5001';
+        }
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            return 'http://localhost:5001';
+        }
+    }
+    return 'https://naxora-ml-backend.onrender.com';
 })();
 
 /**

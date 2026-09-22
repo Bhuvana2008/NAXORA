@@ -13,5 +13,6 @@
  */
 
 window.NAXORA_CONFIG = {
-    API_BASE_URL: "https://naxora-9qrb.onrender.com/api"
+    API_BASE_URL: "https://naxora-9qrb.onrender.com/api",
+    ML_API_BASE_URL: "https://naxora-ml-backend.onrender.com"
 };
