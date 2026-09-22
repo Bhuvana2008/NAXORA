@@ -20,6 +20,13 @@ const API_BASE = (() => {
     return 'http://localhost:5000/api';
 })();
 
+const ML_API_BASE = (() => {
+    if (typeof window !== 'undefined' && window.NAXORA_CONFIG && window.NAXORA_CONFIG.ML_API_BASE_URL) {
+        return window.NAXORA_CONFIG.ML_API_BASE_URL.replace(/\/+$/, '');
+    }
+    return 'http://localhost:5001';
+})();
+
 /**
  * ==========================================================================
  * CENTRAL NAXORA STATE (Single Source of Truth)
@@ -54,8 +61,25 @@ const NAXORA_STATE = {
         online: true,
         mode: 'MONITORING ACTIVE',
         lastUpdated: new Date().toISOString()
-    }
+    },
+
+    // Latest ML Model Analysis State (IsolationForest Backend)
+    lastMlAnalysis: null
 };
+
+/**
+ * Sanitizes and formats percentage strings, guaranteeing exactly one '%' character.
+ * Prevents double-percentage formatting bugs (e.g. '96%%' -> '96%').
+ */
+function formatPercent(val, defaultVal = '96%') {
+    if (val === null || val === undefined || val === '') {
+        const dStr = String(defaultVal).trim().replace(/%+$/, '');
+        return dStr ? `${dStr}%` : '96%';
+    }
+    const str = String(val).trim();
+    const num = str.replace(/%+$/, '').trim();
+    return num ? `${num}%` : (String(defaultVal).replace(/%+$/, '') + '%');
+}
 
 // Chart.js Global Instances
 let predictionChartInstance = null;
@@ -330,7 +354,7 @@ function syncOpenModals() {
                     const sign = currentHotspot.deviation_percent > 0 ? '+' : '';
                     devEl.textContent = `${sign}${currentHotspot.deviation_percent}%`;
                 }
-                if (confEl) confEl.textContent = `${currentHotspot.confidence || 96}%`;
+                if (confEl) confEl.textContent = formatPercent(currentHotspot.confidence);
                 if (reasonEl && currentHotspot.reason) reasonEl.textContent = currentHotspot.reason;
                 if (actionEl && currentHotspot.recommended_action) actionEl.textContent = currentHotspot.recommended_action;
             }
@@ -673,6 +697,44 @@ function updateAiDiagnostics(aiDiag = null, priorityAlert = null) {
     const confEl = document.getElementById('aiConfidenceVal');
     const actEl = document.getElementById('aiSuggestedAction');
 
+    // If an active ML analysis is available, dynamically bind ML response
+    if (NAXORA_STATE.lastMlAnalysis) {
+        const ml = NAXORA_STATE.lastMlAnalysis;
+        if (bodyEl && ml.ai_insight) {
+            bodyEl.innerHTML = ml.ai_insight.what || `${ml.location} is consuming ${ml.inputs?.electricity || 1846} kWh (IsolationForest Outlier).`;
+        }
+        if (reasonEl && ml.ai_insight) {
+            reasonEl.textContent = ml.ai_insight.why || 'IsolationForest detected non-occupancy equipment power surge.';
+        }
+        if (confEl) {
+            const scoreText = ml.anomaly_score !== undefined ? ` • Score: ${ml.anomaly_score}` : '';
+            confEl.textContent = `${formatPercent(ml.confidence)} (${ml.anomaly_status || 'CRITICAL'}${scoreText})`;
+            confEl.className = ml.is_anomaly ? 'red-text' : 'green-text';
+        }
+        if (actEl && ml.ai_insight) {
+            actEl.textContent = ml.ai_insight.recommendation || 'Apply automated BMS shutdown and inspect equipment.';
+        }
+
+        const alertLoc = document.getElementById('priorityAlertLocation');
+        const alertHeader = document.getElementById('priorityAlertHeader');
+        const alertBody = document.getElementById('priorityAlertBody');
+        const alertAct = document.getElementById('priorityAlertAction');
+
+        if (alertLoc) alertLoc.textContent = ml.location || 'Block A - Room 204';
+        if (alertHeader) alertHeader.textContent = `PRIORITY ALERT (${ml.anomaly_status || (ml.severity ? ml.severity + ' ANOMALY' : 'CRITICAL ANOMALY')})`;
+        if (alertBody) {
+            const elecDev = ml.deviations?.electricity_percent || 0;
+            const devSign = elecDev > 0 ? `+${elecDev}%` : `${elecDev}%`;
+            const baseVal = ml.expected_baseline?.electricity || 620;
+            const currentElec = ml.inputs?.electricity !== undefined ? ml.inputs.electricity : 1846;
+            alertBody.textContent = `ML IsolationForest detected abnormal draw (${currentElec} kWh vs expected baseline ${baseVal} kWh, ${devSign}).`;
+        }
+        if (alertAct) {
+            alertAct.textContent = ml.ai_insight?.recommendation || 'Immediate inspection or automated BMS shutdown recommended!';
+        }
+        return;
+    }
+
     const topAnomaly = NAXORA_STATE.hotspots.find(h => h.severity === 'CRITICAL' || h.severity === 'HIGH' || h.severity === 'MEDIUM') || NAXORA_STATE.hotspots[0];
     const isAnomaly = topAnomaly && (topAnomaly.severity === 'CRITICAL' || topAnomaly.severity === 'HIGH' || topAnomaly.severity === 'MEDIUM');
     const locName = topAnomaly ? (topAnomaly.room && topAnomaly.room !== topAnomaly.building ? `${topAnomaly.building} • ${topAnomaly.room}` : topAnomaly.building) : 'Block A • Room 204';
@@ -693,10 +755,11 @@ function updateAiDiagnostics(aiDiag = null, priorityAlert = null) {
     }
     if (confEl) {
         if (aiDiag?.confidenceLabel) {
-            confEl.textContent = `${aiDiag.confidenceVal || aiDiag.confidence || 96}% (${aiDiag.confidenceLabel})`;
+            confEl.textContent = `${formatPercent(aiDiag.confidenceVal || aiDiag.confidence || 96)} (${aiDiag.confidenceLabel})`;
             confEl.className = (aiDiag.isLowConfidence || (aiDiag.confidenceVal && aiDiag.confidenceVal < 70)) ? 'orange-text' : 'green-text';
         } else {
-            confEl.textContent = `${aiDiag?.confidence || (topAnomaly ? topAnomaly.confidence : 96)}%`;
+            confEl.textContent = formatPercent(aiDiag?.confidence || (topAnomaly ? topAnomaly.confidence : 96));
+            confEl.className = isAnomaly ? 'red-text' : 'green-text';
         }
     }
     if (actEl) {
@@ -704,6 +767,7 @@ function updateAiDiagnostics(aiDiag = null, priorityAlert = null) {
     }
 
     const alertLoc = document.getElementById('priorityAlertLocation');
+    const alertHeader = document.getElementById('priorityAlertHeader');
     const alertBody = document.getElementById('priorityAlertBody');
     const alertAct = document.getElementById('priorityAlertAction');
 
@@ -712,10 +776,12 @@ function updateAiDiagnostics(aiDiag = null, priorityAlert = null) {
 
     if (topAlert) {
         if (alertLoc) alertLoc.textContent = topAlert.location;
+        if (alertHeader) alertHeader.textContent = `PRIORITY ALERT (${topAlert.severity ? topAlert.severity + ' ANOMALY' : 'CRITICAL ANOMALY'})`;
         if (alertBody) alertBody.textContent = topAlert.message;
         if (alertAct) alertAct.textContent = 'Immediate inspection or automated BMS shutdown recommended.';
     } else {
         if (alertLoc) alertLoc.textContent = 'Campus Monitored Zones';
+        if (alertHeader) alertHeader.textContent = 'PRIORITY ALERT';
         if (alertBody) alertBody.textContent = 'All monitored facilities operating within nominal baseline parameters. No active priority alerts.';
         if (alertAct) alertAct.textContent = 'Nominal status — awaiting post-action telemetry stream.';
     }
@@ -727,6 +793,24 @@ function updatePredictionCard(pred = null) {
     const costEl = document.getElementById('futurePredictionCost');
     const confEl = document.getElementById('predConfidenceVal');
 
+    // If an active ML analysis is available, use live ML response dynamically
+    if (NAXORA_STATE.lastMlAnalysis) {
+        const ml = NAXORA_STATE.lastMlAnalysis;
+        if (bodyEl) {
+            const wasteFormatted = ml.predicted_monthly_waste !== undefined ? Number(ml.predicted_monthly_waste).toLocaleString() : '0';
+            const unit = ml.predicted_monthly_waste_unit || 'kWh';
+            bodyEl.innerHTML = `${ml.location} projected waste: <strong>${wasteFormatted} ${unit}/month</strong> (IsolationForest ML).`;
+        }
+        if (costEl) {
+            const costVal = ml.estimated_avoidable_cost !== undefined ? Number(ml.estimated_avoidable_cost).toLocaleString() : '0';
+            costEl.textContent = `Rs. ${costVal}/month`;
+        }
+        if (confEl) {
+            confEl.textContent = formatPercent(ml.confidence);
+        }
+        return;
+    }
+
     const topAnomaly = NAXORA_STATE.hotspots.find(h => h.severity === 'CRITICAL' || h.severity === 'HIGH' || h.severity === 'MEDIUM');
     const isAnomaly = !!topAnomaly;
     const locName = topAnomaly ? (topAnomaly.room && topAnomaly.room !== topAnomaly.building ? `${topAnomaly.building} • ${topAnomaly.room}` : topAnomaly.building) : 'Block A • Room 204';
@@ -736,18 +820,31 @@ function updatePredictionCard(pred = null) {
         if (pred?.summary) {
             bodyEl.innerHTML = pred.summary;
         } else if (isAnomaly) {
-            const wasteEst = Math.max(252, Math.round((topAnomaly.current_value - topAnomaly.baseline_value) * 0.3));
-            bodyEl.innerHTML = `${locName} may waste approximately: <strong>${wasteEst} ${unit}/month</strong> if unmitigated.`;
+            const diff = Math.max(0, topAnomaly.current_value - topAnomaly.baseline_value);
+            const wasteEst = Math.round(diff * 0.3 * 30 / 100);
+            bodyEl.innerHTML = `${locName} may waste approximately: <strong>${wasteEst.toLocaleString()} ${unit}/month</strong> if unmitigated.`;
         } else {
             bodyEl.innerHTML = `Projected wastage trajectory remains below baseline thresholds.`;
         }
     }
     if (costEl) {
-        const cost = pred?.estimatedAvoidableCost || (isAnomaly ? Math.round(Math.max(252, (topAnomaly.current_value - topAnomaly.baseline_value) * 0.3) * (topAnomaly?.resource_type === 'Water' ? 0.08 : 8.0)) : 0);
-        costEl.textContent = cost > 0 ? `Rs. ${cost.toLocaleString()}/month` : 'Nominal';
+        if (pred?.financialImpact) {
+            costEl.textContent = pred.financialImpact;
+        } else if (pred?.predictedCostImpact) {
+            costEl.textContent = pred.predictedCostImpact;
+        } else if (pred?.estimatedAvoidableCost !== undefined) {
+            costEl.textContent = `Rs. ${Number(pred.estimatedAvoidableCost).toLocaleString()}/month`;
+        } else if (isAnomaly) {
+            const diff = Math.max(0, topAnomaly.current_value - topAnomaly.baseline_value);
+            const wasteEst = Math.round(diff * 0.3 * 30 / 100);
+            const cost = Math.round(wasteEst * (topAnomaly?.resource_type === 'Water' ? 0.08 : 8.0));
+            costEl.textContent = cost > 0 ? `Rs. ${cost.toLocaleString()}/month` : 'Nominal';
+        } else {
+            costEl.textContent = 'Nominal';
+        }
     }
     if (confEl) {
-        confEl.textContent = `${pred?.confidence || topAnomaly?.confidence || 96}%`;
+        confEl.textContent = formatPercent(pred?.confidence || topAnomaly?.confidence || 96);
     }
 }
 
@@ -810,7 +907,7 @@ function openHotspotDiagnosticModal(hotspotKey) {
         const sign = hotspot.deviation_percent > 0 ? '+' : '';
         devEl.textContent = `${sign}${hotspot.deviation_percent}%`;
     }
-    if (confEl) confEl.textContent = `${hotspot.confidence || 96}%`;
+    if (confEl) confEl.textContent = formatPercent(hotspot.confidence);
     if (reasonEl) reasonEl.textContent = hotspot.reason || 'Telemetry deviation detected against rolling baseline.';
     if (actionEl) actionEl.textContent = hotspot.recommended_action || 'Inspect circuit breaker and apply automated BMS mitigation.';
 
@@ -1232,8 +1329,23 @@ async function loadAiInsights() {
             priorityBadgeEl.textContent = topAnom.severity;
         }
 
+        const aiWasteEl = document.getElementById('aiPredMonthlyWaste');
+        const aiCostEl = document.getElementById('aiPredMonthlyCost');
+        const aiConfEl = document.getElementById('aiPredConfidenceVal');
+        const aiRiskEl = document.getElementById('aiPredRiskLevel');
+
+        if (topAnom) {
+            const diff = Math.max(0, topAnom.current_value - topAnom.baseline_value);
+            const wasteEst = Math.round(diff * 0.3 * 30 / 100);
+            const cost = Math.round(wasteEst * (topAnom.resource_type === 'Water' ? 0.08 : 8.0));
+            if (aiWasteEl) aiWasteEl.textContent = `${wasteEst.toLocaleString()} ${topAnom.resource_type === 'Water' ? 'L' : 'kWh'}`;
+            if (aiCostEl) aiCostEl.textContent = `Rs. ${cost.toLocaleString()}`;
+            if (aiConfEl) aiConfEl.textContent = formatPercent(topAnom.confidence || 96);
+            if (aiRiskEl) aiRiskEl.textContent = topAnom.severity || 'CRITICAL';
+        }
+
         list.innerHTML = activeAnomalies.map(h => {
-            const conf = h.confidence || 96;
+            const conf = Number(String(h.confidence || 96).replace(/%+$/, '')) || 96;
             let confLabel = h.confidenceLabel || 'High Confidence';
             let confColor = 'var(--accent-green)';
             if (conf < 70 || h.isLowConfidence || (h.confidenceLabel && h.confidenceLabel.includes('learning'))) {
@@ -1557,10 +1669,10 @@ async function loadPredictions() {
                 }
                 if (confEl) {
                     if (summary.confidenceLabel) {
-                        confEl.textContent = `${summary.confidence || 50}% (${summary.confidenceLabel})`;
+                        confEl.textContent = `${formatPercent(summary.confidence || 50)} (${summary.confidenceLabel})`;
                         confEl.className = summary.isLowConfidence ? 'score-large orange-text' : 'score-large green-text';
                     } else {
-                        confEl.textContent = `${summary.confidence || 50}%`;
+                        confEl.textContent = formatPercent(summary.confidence || 50);
                     }
                 }
 
@@ -1729,9 +1841,114 @@ function resetSettingsDefaults() {
     saveSettingsToBackend();
 }
 
+// ================= ML BACKEND INTEGRATION (Python / Flask / IsolationForest) =================
+async function analyzeWithMlBackend(telemetryData) {
+    try {
+        const payload = {
+            electricity: telemetryData.electricity !== undefined ? Number(telemetryData.electricity) : 1846,
+            water: telemetryData.water !== undefined ? Number(telemetryData.water) : 45,
+            occupancy: telemetryData.occupancy !== undefined ? Number(telemetryData.occupancy) : 0,
+            hour: telemetryData.hour !== undefined ? Number(telemetryData.hour) : 22,
+            location: telemetryData.location || 'Block A - Room 204'
+        };
+
+        const res = await fetch(`${ML_API_BASE}/analyze`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            const mlResult = await res.json();
+            applyMlAnalysisToUI(mlResult);
+            return mlResult;
+        } else {
+            console.warn('[NAXORA ML Backend] Received non-200 response:', res.status);
+            return null;
+        }
+    } catch (err) {
+        console.warn('[NAXORA ML Backend Offline/Error]:', err.message);
+        return null;
+    }
+}
+
+function applyMlAnalysisToUI(ml) {
+    if (!ml || !ml.success) return;
+
+    // Persist ML analysis in central state for continuous synchronization
+    NAXORA_STATE.lastMlAnalysis = ml;
+
+    // 1. Update AI Insight Section
+    const bodyEl = document.getElementById('aiInsightBody');
+    const reasonEl = document.getElementById('aiDetectionReason');
+    const confEl = document.getElementById('aiConfidenceVal');
+    const actEl = document.getElementById('aiSuggestedAction');
+
+    if (bodyEl && ml.ai_insight) {
+        bodyEl.innerHTML = ml.ai_insight.what || `${ml.location} is consuming ${ml.inputs?.electricity || 1846} kWh (IsolationForest Outlier).`;
+    }
+    if (reasonEl && ml.ai_insight) {
+        reasonEl.textContent = ml.ai_insight.why || 'IsolationForest detected non-occupancy equipment power surge.';
+    }
+    if (confEl) {
+        const scoreText = ml.anomaly_score !== undefined ? ` • Score: ${ml.anomaly_score}` : '';
+        confEl.textContent = `${formatPercent(ml.confidence)} (${ml.anomaly_status || 'CRITICAL'}${scoreText})`;
+        confEl.className = ml.is_anomaly ? 'red-text' : 'green-text';
+    }
+    if (actEl && ml.ai_insight) {
+        actEl.textContent = ml.ai_insight.recommendation || 'Apply automated BMS shutdown and inspect equipment.';
+    }
+
+    // 2. Update Future Prediction Section
+    const predBodyEl = document.getElementById('futurePredictionBody');
+    const predCostEl = document.getElementById('futurePredictionCost');
+    const predConfEl = document.getElementById('predConfidenceVal');
+
+    if (predBodyEl) {
+        const wasteFormatted = ml.predicted_monthly_waste !== undefined ? Number(ml.predicted_monthly_waste).toLocaleString() : '0';
+        const unit = ml.predicted_monthly_waste_unit || 'kWh';
+        predBodyEl.innerHTML = `${ml.location} projected waste: <strong>${wasteFormatted} ${unit}/month</strong> (IsolationForest ML).`;
+    }
+    if (predCostEl) {
+        const costVal = ml.estimated_avoidable_cost !== undefined ? Number(ml.estimated_avoidable_cost).toLocaleString() : '0';
+        predCostEl.textContent = `Rs. ${costVal}/month`;
+    }
+    if (predConfEl) {
+        predConfEl.textContent = formatPercent(ml.confidence);
+    }
+
+    // 3. Update Priority Alert Section
+    const alertLoc = document.getElementById('priorityAlertLocation');
+    const alertHeader = document.getElementById('priorityAlertHeader');
+    const alertBody = document.getElementById('priorityAlertBody');
+    const alertAct = document.getElementById('priorityAlertAction');
+
+    if (alertLoc) alertLoc.textContent = ml.location || 'Block A - Room 204';
+    if (alertHeader) alertHeader.textContent = `PRIORITY ALERT (${ml.anomaly_status || (ml.severity ? ml.severity + ' ANOMALY' : 'CRITICAL ANOMALY')})`;
+    if (alertBody) {
+        const elecDev = ml.deviations?.electricity_percent || 0;
+        const devSign = elecDev > 0 ? `+${elecDev}%` : `${elecDev}%`;
+        const baseVal = ml.expected_baseline?.electricity || 620;
+        const currentElec = ml.inputs?.electricity !== undefined ? ml.inputs.electricity : 1846;
+        alertBody.textContent = `ML IsolationForest detected abnormal draw (${currentElec} kWh vs expected baseline ${baseVal} kWh, ${devSign}).`;
+    }
+    if (alertAct) {
+        alertAct.textContent = ml.ai_insight?.recommendation || 'Immediate inspection or automated BMS shutdown recommended!';
+    }
+}
+
 // ================= DYNAMIC DEMO CONTROLS (USING REAL API PIPELINE) =================
 async function triggerSimulatePowerSpike() {
     showNotification('Sending power surge telemetry: Block A - Room 204 (1,846 kWh)...');
+
+    // Trigger ML backend analysis in parallel
+    analyzeWithMlBackend({
+        electricity: 1846,
+        water: 45,
+        occupancy: 0,
+        hour: 22,
+        location: 'Block A - Room 204'
+    });
 
     try {
         const res = await fetch(`${API_BASE}/telemetry`, {
@@ -1761,6 +1978,15 @@ async function triggerSimulatePowerSpike() {
 async function triggerSimulateWaterLeak() {
     showNotification('Sending water surge telemetry: Canteen - Wash Station (940 L/h)...');
 
+    // Trigger ML backend analysis in parallel
+    analyzeWithMlBackend({
+        electricity: 400,
+        water: 940,
+        occupancy: 12,
+        hour: 14,
+        location: 'Canteen - Wash Station'
+    });
+
     try {
         const res = await fetch(`${API_BASE}/telemetry`, {
             method: 'POST',
@@ -1787,6 +2013,7 @@ async function triggerSimulateWaterLeak() {
 }
 
 async function triggerApplyBmsShutdown(alertId = null, location = null, resourceType = null) {
+    NAXORA_STATE.lastMlAnalysis = null;
     if (!location && !alertId && NAXORA_STATE.currentSelectedHotspot) {
         const h = NAXORA_STATE.currentSelectedHotspot;
         location = h.building + (h.room && h.room !== h.building ? ' - ' + h.room : '');
@@ -1826,6 +2053,7 @@ async function triggerApplyBmsShutdown(alertId = null, location = null, resource
 }
 
 async function triggerResetBaseline() {
+    NAXORA_STATE.lastMlAnalysis = null;
     showNotification('Resetting all telemetry, database records, and alerts to baseline...');
 
     try {
@@ -1845,9 +2073,18 @@ async function triggerResetBaseline() {
     }
 }
 
-function triggerFullSimulationWorkflow() {
-    showNotification('Starting Guided System Walkthrough...');
+async function triggerFullSimulationWorkflow() {
+    showNotification('Starting Live Demo with ML Backend (IsolationForest)...');
     switchView('dashboard');
+
+    // Call ML Backend /analyze immediately with simulated data
+    await analyzeWithMlBackend({
+        electricity: 1846,
+        water: 45,
+        occupancy: 0,
+        hour: 22,
+        location: 'Block A - Room 204'
+    });
 
     setTimeout(() => {
         showNotification('Step 1: AI Anomaly Engine continuously scans 3D campus sub-meters...');

@@ -339,14 +339,14 @@
                                 <h4>FUTURE PREDICTION</h4>
                             </div>
                             <p class="ai-text-body" id="futurePredictionBody">
-                                Room 204 may waste approximately: <strong>252 kWh/month</strong>.
+                                Connecting to predictive forecasting model...
                             </p>
                             <div class="pred-cost-box">
                                 <span>Estimated Avoidable Cost:</span>
-                                <strong class="pred-cost-val" id="futurePredictionCost">Rs. 2,016/month</strong>
+                                <strong class="pred-cost-val" id="futurePredictionCost">Calculating...</strong>
                             </div>
                             <div class="pred-meta-line">
-                                <span>AI Confidence: <strong class="green-text" id="predConfidenceVal">91%</strong></span>
+                                <span>AI Confidence: <strong class="green-text" id="predConfidenceVal">--</strong></span>
                                 <span class="pred-link-btn">View Chart &rarr;</span>
                             </div>
                         </div>
@@ -481,17 +481,17 @@
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
                             <div class="report-box">
                                 <span class="stat-lbl">Projected Monthly Waste</span>
-                                <div class="score-large red-text" id="aiPredMonthlyWaste">252 kWh</div>
+                                <div class="score-large red-text" id="aiPredMonthlyWaste">--</div>
                                 <p>If left unmitigated</p>
                             </div>
                             <div class="report-box">
                                 <span class="stat-lbl">Estimated Cost Impact</span>
-                                <div class="score-large orange-text" id="aiPredMonthlyCost">Rs. 2,016</div>
+                                <div class="score-large orange-text" id="aiPredMonthlyCost">--</div>
                                 <p>Recoverable through BMS</p>
                             </div>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px;">
-                            <span style="font-size: 0.75rem; color: var(--text-secondary);">Forecast Confidence: <strong class="green-text">91%</strong> &bull; Risk Level: <strong class="red-text">CRITICAL</strong></span>
+                            <span style="font-size: 0.75rem; color: var(--text-secondary);">Forecast Confidence: <strong class="green-text" id="aiPredConfidenceVal">96%</strong> &bull; Risk Level: <strong class="red-text" id="aiPredRiskLevel">ACTIVE</strong></span>
                             <button class="btn-sec-action" onclick="switchView('predictions')">View Predictions &rarr;</button>
                         </div>
                     </div>
@@ -531,18 +531,18 @@
                     <div class="pred-breakdown-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 18px;">
                         <div class="report-box">
                             <span class="stat-lbl">Projected 30-Day Wastage</span>
-                            <div class="score-large red-text" id="predMonthlyWaste">252 kWh</div>
+                            <div class="score-large red-text" id="predMonthlyWaste">--</div>
                             <p>If left unmitigated</p>
                         </div>
                         <div class="report-box">
                             <span class="stat-lbl">Estimated Avoidable Cost</span>
-                            <div class="score-large orange-text" id="predMonthlyCost">Rs. 2,016</div>
+                            <div class="score-large orange-text" id="predMonthlyCost">--</div>
                             <p>Recoverable through BMS</p>
                         </div>
                         <div class="report-box">
                             <span class="stat-lbl">Forecast Model Confidence</span>
-                            <div class="score-large green-text" id="predModelConfidence">96%</div>
-                            <p>Based on 30-day baseline</p>
+                            <div class="score-large green-text" id="predModelConfidence">--</div>
+                            <p>Based on rolling baseline</p>
                         </div>
                     </div>
                 </div>
